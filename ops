@@ -1,1 +1,1 @@
-{"author":{"id":"b94c0b30db1e754ba86220b20713bc907db35bd78dbf02edfeab42771012af8f"},"ops":[{"type":5,"timestamp":1750784219,"nonce":"tAfHmN8feh7wULOFucyNMNIvIjo=","added":["feature"],"removed":null}]}
+{"author":{"id":"b94c0b30db1e754ba86220b20713bc907db35bd78dbf02edfeab42771012af8f"},"ops":[{"type":8,"timestamp":1750784255,"nonce":"nXpIEOqLciQlq/vjxj0JXYbfql8=","target":"7c160fccc9c75fd0b4582a90e5edba22638d7b6fa43d236fa235e3e6d8a17b8c","new_metadata":{"github-id":"I_kwDONyxW-M69Gxa_","github-url":"https://github.com/MatthiasPetermann/focalsort/issues/1"}}]}
