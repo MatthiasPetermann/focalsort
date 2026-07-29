@@ -10,6 +10,7 @@ FocalSort analysiert JPG/JPEG-Dateien und benennt Bilder deterministisch um.
 - `cameraid`: kompakter Kamera-Identifier aus EXIF `Make` + `Model` (z. B. `SONA2F`)
 - `quality`: kompakter Schärfe-Code `Q00..Q99` (Sobel-Kantenstärke via `bild` + log-Skalierung)
 - löst Namenskollisionen deterministisch mit `_0001`, `_0002`, ...
+- erkennt keine inhaltlichen Duplikate: gleiche Bilder bleiben erhalten und erhalten bei einer Namenskollision diesen Suffix
 - unterstützt Dry-Run ohne Dateiänderungen
 
 ## CLI
@@ -25,7 +26,7 @@ Wichtige Flags:
 - `--dry-run` (default: `false`): nur geplante Umbenennungen ausgeben
 - `--fallback-to-modtime` (default: `false`): `mtime` verwenden, wenn EXIF-Zeit fehlt
 - `--checksum-length` (default: `16`, Bereich `1..40`): Länge des Checksum-Suffixes
-- `--tui, -t`: Fullscreen Terminal-UI (Bubble Tea, Synthwave) aktivieren (`q`=quit, `c`=logs löschen)
+- `--tui, -t`: Fullscreen Terminal-UI (Bubble Tea, Synthwave) aktivieren (`q`/`Strg+C`=Verarbeitung abbrechen, `c`=Logs löschen)
 
 ## Beispiele
 

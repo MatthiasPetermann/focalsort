@@ -89,12 +89,18 @@ func run() error {
 	processedCount := 0
 
 	for _, path := range files {
+		if useTUI && tui.Cancelled() {
+			return nil
+		}
 		if useTUI {
 			tui.SetCurrentFile(path)
 		}
 		logMessage("Processing file: " + filepath.Base(path))
 
 		metadata, err := exif.DeriveMetadata(path, fallbackToModTime)
+		if useTUI && tui.Cancelled() {
+			return nil
+		}
 		if err != nil {
 			failedCount++
 			setProcessingError(fmt.Sprintf("metadata: %v", err))
@@ -104,6 +110,9 @@ func run() error {
 		}
 
 		checksum, err := hash.CalculateChecksum(path)
+		if useTUI && tui.Cancelled() {
+			return nil
+		}
 		if err != nil {
 			failedCount++
 			setProcessingError(fmt.Sprintf("checksum: %v", err))
@@ -113,6 +122,9 @@ func run() error {
 		}
 
 		sharpness, err := imageproc.EvaluateImageQuality(path)
+		if useTUI && tui.Cancelled() {
+			return nil
+		}
 		qualityCode := imageproc.CompactQualityCode(sharpness)
 		if err != nil {
 			skippedCount++

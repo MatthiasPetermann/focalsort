@@ -61,6 +61,13 @@ func TestRenameImageCollisionResolution(t *testing.T) {
 	if _, err := os.Stat(target); err != nil {
 		t.Fatalf("renamed file missing: %v", err)
 	}
+	content, err := os.ReadFile(collision)
+	if err != nil {
+		t.Fatalf("read existing collision file: %v", err)
+	}
+	if string(content) != "y" {
+		t.Fatalf("existing collision file was changed: %q", content)
+	}
 }
 
 func TestRenameImageAlreadyNamed(t *testing.T) {

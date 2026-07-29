@@ -126,6 +126,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch message.String() {
 		case "q", "ctrl+c":
+			cancelProcessing()
 			m.quitting = true
 			return m, tea.Quit
 		case "c":
@@ -354,7 +355,8 @@ func maxInt(a int, b int) int {
 var (
 	programMu sync.Mutex
 	program   *tea.Program
-	runErr    chan error
+	cancelled chan struct{}
+	runDone   chan struct{}
 )
 
 func StartTUI() {
@@ -365,25 +367,64 @@ func StartTUI() {
 		return
 	}
 
-	runErr = make(chan error, 1)
+	cancelled = make(chan struct{})
+	runDone = make(chan struct{})
 	m := newModel()
 	program = tea.NewProgram(m, tea.WithAltScreen())
 
-	go func(p *tea.Program) {
-		runErr <- p.Start()
+	go func(p *tea.Program, done chan struct{}) {
+		_, _ = p.Run()
 		programMu.Lock()
-		defer programMu.Unlock()
-		program = nil
-	}(program)
+		if program == p {
+			program = nil
+		}
+		close(done)
+		programMu.Unlock()
+	}(program, runDone)
 }
 
 func StopTUI() {
 	programMu.Lock()
 	p := program
+	done := runDone
 	programMu.Unlock()
 
 	if p != nil {
-		p.Send(stopMsg{})
+		p.Quit()
+	}
+	if done != nil {
+		<-done
+	}
+}
+
+// Cancelled reports whether the user exited the TUI and requested processing stop.
+func Cancelled() bool {
+	programMu.Lock()
+	cancel := cancelled
+	programMu.Unlock()
+
+	if cancel == nil {
+		return false
+	}
+	select {
+	case <-cancel:
+		return true
+	default:
+		return false
+	}
+}
+
+func cancelProcessing() {
+	programMu.Lock()
+	defer programMu.Unlock()
+
+	if cancelled == nil {
+		return
+	}
+	select {
+	case <-cancelled:
+	default:
+		close(cancelled)
 	}
 }
 
@@ -461,11 +502,4 @@ func UpdateStatus(processed int, total int) {
 	if p != nil {
 		p.Send(statusMsg{processed: processed, total: total})
 	}
-}
-
-func WaitForExit() error {
-	if runErr == nil {
-		return nil
-	}
-	return <-runErr
 }
