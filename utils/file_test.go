@@ -15,7 +15,7 @@ func TestRenameImageDryRun(t *testing.T) {
 		t.Fatalf("write source: %v", err)
 	}
 
-	target, unchanged, err := RenameImage(source, "20250101_101010", "SON1A2B", "Q37", "abc123", true)
+	target, unchanged, err := RenameImage(source, "20250101_101010", "SON1A2B", "abc123", true)
 	if err != nil {
 		t.Fatalf("RenameImage dry-run: %v", err)
 	}
@@ -27,7 +27,7 @@ func TestRenameImageDryRun(t *testing.T) {
 		t.Fatalf("source file missing in dry-run: %v", err)
 	}
 
-	if filepath.Base(target) != "20250101_101010_SON1A2B_Q37_abc123.jpg" {
+	if filepath.Base(target) != "20250101_101010_SON1A2B_abc123.jpg" {
 		t.Fatalf("unexpected target: %s", target)
 	}
 }
@@ -41,12 +41,12 @@ func TestRenameImageCollisionResolution(t *testing.T) {
 		t.Fatalf("write source: %v", err)
 	}
 
-	collision := filepath.Join(dir, "20250101_101010_SON1A2B_Q37_abc123.jpg")
+	collision := filepath.Join(dir, "20250101_101010_SON1A2B_abc123.jpg")
 	if err := os.WriteFile(collision, []byte("y"), 0o644); err != nil {
 		t.Fatalf("write collision: %v", err)
 	}
 
-	target, unchanged, err := RenameImage(source, "20250101_101010", "SON1A2B", "Q37", "abc123", false)
+	target, unchanged, err := RenameImage(source, "20250101_101010", "SON1A2B", "abc123", false)
 	if err != nil {
 		t.Fatalf("RenameImage collision: %v", err)
 	}
@@ -54,7 +54,7 @@ func TestRenameImageCollisionResolution(t *testing.T) {
 		t.Fatal("collision rename unexpectedly reported unchanged")
 	}
 
-	if filepath.Base(target) != "20250101_101010_SON1A2B_Q37_abc123_0001.jpg" {
+	if filepath.Base(target) != "20250101_101010_SON1A2B_abc123_0001.jpg" {
 		t.Fatalf("unexpected collision target: %s", target)
 	}
 
@@ -74,12 +74,12 @@ func TestRenameImageAlreadyNamed(t *testing.T) {
 	t.Parallel()
 
 	dir := t.TempDir()
-	source := filepath.Join(dir, "20250101_101010_SON1A2B_Q37_abc123.jpg")
+	source := filepath.Join(dir, "20250101_101010_SON1A2B_abc123.jpg")
 	if err := os.WriteFile(source, []byte("x"), 0o644); err != nil {
 		t.Fatalf("write source: %v", err)
 	}
 
-	target, unchanged, err := RenameImage(source, "20250101_101010", "SON1A2B", "Q37", "abc123", false)
+	target, unchanged, err := RenameImage(source, "20250101_101010", "SON1A2B", "abc123", false)
 	if err != nil {
 		t.Fatalf("RenameImage already named: %v", err)
 	}

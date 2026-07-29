@@ -8,10 +8,10 @@ import (
 	"strings"
 )
 
-func RenameImage(filePath, timestamp, cameraID, qualityCode, checksum string, dryRun bool) (string, bool, error) {
+func RenameImage(filePath, timestamp, cameraID, checksum string, dryRun bool) (string, bool, error) {
 	dir := filepath.Dir(filePath)
 	ext := strings.ToLower(filepath.Ext(filePath))
-	baseName := fmt.Sprintf("%s_%s_%s_%s", timestamp, cameraID, qualityCode, checksum)
+	baseName := fmt.Sprintf("%s_%s_%s", timestamp, cameraID, checksum)
 
 	candidatePath := filepath.Join(dir, baseName+ext)
 	if filePath == candidatePath {

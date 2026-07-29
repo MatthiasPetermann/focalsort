@@ -1,17 +1,16 @@
 # FocalSort
 
-FocalSort analysiert JPG/JPEG-Dateien und benennt Bilder deterministisch um.
+FocalSort analyzes JPG/JPEG files and renames them deterministically.
 
-## Verhalten
+## Behavior
 
-- verarbeitet Dateien in stabil sortierter Reihenfolge (lexikografisch nach Pfad)
-- berücksichtigt `.jpg` und `.jpeg` (case-insensitiv)
-- erzeugt Dateinamen im Format `YYYYMMDD_HHMMSS_<cameraid>_<quality>_<checksum>.jpg`
-- `cameraid`: kompakter Kamera-Identifier aus EXIF `Make` + `Model` (z. B. `SONA2F`)
-- `quality`: kompakter Schärfe-Code `Q00..Q99` (Sobel-Kantenstärke via `bild` + log-Skalierung)
-- löst Namenskollisionen deterministisch mit `_0001`, `_0002`, ...
-- erkennt keine inhaltlichen Duplikate: gleiche Bilder bleiben erhalten und erhalten bei einer Namenskollision diesen Suffix
-- unterstützt Dry-Run ohne Dateiänderungen
+- processes files in stable, lexicographic path order
+- supports `.jpg` and `.jpeg` files case-insensitively
+- produces names in the format `YYYYMMDD_HHMMSS_<cameraid>_<checksum>.jpg`
+- `cameraid`: compact camera identifier derived from EXIF `Make` and `Model` (for example, `SONA2F`)
+- resolves filename collisions deterministically with `_0001`, `_0002`, ...
+- does not detect content duplicates: identical images are retained and receive a collision suffix
+- supports dry runs without modifying files
 
 ## CLI
 
@@ -19,37 +18,37 @@ FocalSort analysiert JPG/JPEG-Dateien und benennt Bilder deterministisch um.
 focalsort --import-folder ./photos
 ```
 
-Wichtige Flags:
+Key flags:
 
-- `--import-folder, -i` (pflichtig): Quellordner
-- `--recursive` (default: `true`): rekursiv durchsuchen
-- `--dry-run` (default: `false`): nur geplante Umbenennungen ausgeben
-- `--fallback-to-modtime` (default: `false`): `mtime` verwenden, wenn EXIF-Zeit fehlt
-- `--checksum-length` (default: `16`, Bereich `1..40`): Länge des Checksum-Suffixes
-- `--tui, -t`: Fullscreen Terminal-UI (Bubble Tea, Synthwave) aktivieren (`q`/`Strg+C`=Verarbeitung abbrechen, `c`=Logs löschen)
+- `--import-folder, -i` (required): source folder
+- `--recursive` (default: `true`): search folders recursively
+- `--dry-run` (default: `false`): print planned renames without changing files
+- `--fallback-to-modtime` (default: `false`): use the file modification time when the EXIF timestamp is missing
+- `--checksum-length` (default: `16`, range `1..40`): checksum suffix length
+- `--tui, -t`: enable the full-screen terminal UI (`q`/`Ctrl+C` cancels processing; `c` clears logs)
 
-## Build fuer Linux
+## Build for Linux
 
 ```bash
 make linux
-scp dist/focalsort-linux-amd64 user@server:/ziel/pfad/
+scp dist/focalsort-linux-amd64 user@server:/target/path/
 ```
 
-Das Target erzeugt eine statisch gelinkte Linux-Binaerdatei ohne CGO-Abhaengigkeiten. Fuer ARM64-Server:
+The target builds a statically linked Linux binary without CGO dependencies. For ARM64 servers:
 
 ```bash
 make linux GOARCH=arm64
 ```
 
-## Beispiele
+## Examples
 
 ```bash
-# nur planen, nichts ändern
+# Preview changes without renaming files
 focalsort -i ./photos --dry-run
 
-# nur oberstes Verzeichnis auswerten
+# Process only the top-level folder
 focalsort -i ./photos --recursive=false
 
-# fehlende EXIF-Zeit mit mtime ersetzen
+# Use mtime when the EXIF timestamp is missing
 focalsort -i ./photos --fallback-to-modtime
 ```

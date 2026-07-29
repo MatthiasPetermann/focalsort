@@ -32,10 +32,10 @@ func TestModelUpdateAndView(t *testing.T) {
 	m = updated.(model)
 
 	view := m.View()
-	if !strings.Contains(view, "FocalSort Synthwave") {
+	if !strings.Contains(view, "FocalSort | q: Cancel | c: Clear logs") {
 		t.Fatalf("missing title in view: %q", view)
 	}
-	if !strings.Contains(view, "Fortschritt") {
+	if !strings.Contains(view, "Progress") {
 		t.Fatalf("missing progress in view: %q", view)
 	}
 	if !strings.Contains(view, "first") {
@@ -44,7 +44,7 @@ func TestModelUpdateAndView(t *testing.T) {
 	if !strings.Contains(view, "█") {
 		t.Fatalf("missing progress bar in view: %q", view)
 	}
-	if !strings.Contains(view, "Bereits benannt") {
+	if !strings.Contains(view, "Already named") {
 		t.Fatalf("missing already named counter in view: %q", view)
 	}
 }

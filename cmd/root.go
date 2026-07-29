@@ -10,7 +10,6 @@ import (
 
 	"focalsort/exif"
 	"focalsort/hash"
-	"focalsort/imageproc"
 	"focalsort/tui"
 	"focalsort/utils"
 
@@ -121,19 +120,8 @@ func run() error {
 			continue
 		}
 
-		sharpness, err := imageproc.EvaluateImageQuality(path)
-		if useTUI && tui.Cancelled() {
-			return nil
-		}
-		qualityCode := imageproc.CompactQualityCode(sharpness)
-		if err != nil {
-			skippedCount++
-			qualityCode = "Q00"
-			logMessage(fmt.Sprintf("Skipping image quality for %s: %v", filepath.Base(path), err))
-		}
-
 		shortChecksum := hash.ShortChecksum(checksum, checksumLength)
-		newPath, unchanged, err := utils.RenameImage(path, metadata.Timestamp, metadata.CameraID, qualityCode, shortChecksum, dryRun)
+		newPath, unchanged, err := utils.RenameImage(path, metadata.Timestamp, metadata.CameraID, shortChecksum, dryRun)
 		if err != nil {
 			failedCount++
 			setProcessingError(fmt.Sprintf("rename: %v", err))

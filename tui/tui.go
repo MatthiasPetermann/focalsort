@@ -177,17 +177,17 @@ func (m model) View() string {
 	if elapsed < 0 {
 		elapsed = 0
 	}
-	lines := []string{titleStyle.Render(padText("FocalSort Synthwave | q: Abbrechen | c: Logs loeschen", viewportWidth))}
+	lines := []string{titleStyle.Render(padText("FocalSort | q: Cancel | c: Clear logs", viewportWidth))}
 	usedHeight := 1
 	if viewportHeight >= 14 {
 		lines = append(lines,
 			padText("Import: "+valueOrDash(m.importFolder), viewportWidth),
-			padText("Aktuell: "+valueOrDash(m.currentFile), viewportWidth),
+			padText("Current: "+valueOrDash(m.currentFile), viewportWidth),
 			padText(activityText(m), viewportWidth),
 		)
 		usedHeight += 3
 	} else if viewportHeight >= 9 {
-		lines = append(lines, padText("Aktuell: "+valueOrDash(m.currentFile), viewportWidth))
+		lines = append(lines, padText("Current: "+valueOrDash(m.currentFile), viewportWidth))
 		usedHeight++
 	}
 
@@ -196,22 +196,22 @@ func (m model) View() string {
 			leftWidth := (viewportWidth - 1) / 2
 			rightWidth := viewportWidth - leftWidth - 1
 			left := box(leftWidth, []string{
-				fmt.Sprintf("Fortschritt: %d/%d (%.1f%%)", m.processed, m.total, pct*100),
+				fmt.Sprintf("Progress: %d/%d (%.1f%%)", m.processed, m.total, pct*100),
 				renderProgressBar(pct, maxInt(leftWidth-4, 1)),
-				"Laufzeit: " + elapsed.String(),
+				"Elapsed: " + elapsed.String(),
 			})
 			right := box(rightWidth, []string{
-				fmt.Sprintf("Erfolg: %d | Fehler: %d", m.success, m.failed),
-				fmt.Sprintf("Uebersprungen: %d | Bereits benannt: %d", m.skipped, m.alreadyNamed),
-				fmt.Sprintf("rekursiv=%t | dry-run=%t", m.recursive, m.dryRun),
+				fmt.Sprintf("Success: %d | Failed: %d", m.success, m.failed),
+				fmt.Sprintf("Skipped: %d | Already named: %d", m.skipped, m.alreadyNamed),
+				fmt.Sprintf("recursive=%t | dry-run=%t", m.recursive, m.dryRun),
 			})
 			for i := range left {
 				lines = append(lines, borderStyle.Render(left[i])+" "+borderStyle.Render(right[i]))
 			}
 		} else {
 			for _, line := range box(viewportWidth, []string{
-				fmt.Sprintf("Fortschritt: %d/%d (%.1f%%)", m.processed, m.total, pct*100),
-				fmt.Sprintf("Erfolg: %d | Fehler: %d | Uebersprungen: %d", m.success, m.failed, m.skipped),
+				fmt.Sprintf("Progress: %d/%d (%.1f%%)", m.processed, m.total, pct*100),
+				fmt.Sprintf("Success: %d | Failed: %d | Skipped: %d", m.success, m.failed, m.skipped),
 				renderProgressBar(pct, maxInt(viewportWidth-4, 1)),
 			}) {
 				lines = append(lines, borderStyle.Render(line))
@@ -225,7 +225,7 @@ func (m model) View() string {
 		innerLogWidth := maxInt(viewportWidth-2, 1)
 		logLines := tailLogs(wrapLines(m.logs, innerLogWidth), maxInt(logHeight-2, 1))
 		if len(logLines) == 0 {
-			logLines = []string{"Noch keine Logeintraege"}
+			logLines = []string{"No log entries yet"}
 		}
 		for len(logLines) < logHeight-2 {
 			logLines = append(logLines, "")
@@ -257,9 +257,9 @@ func padText(text string, width int) string {
 
 func activityText(m model) string {
 	if m.lastError != "" {
-		return "Letzter Fehler: " + m.lastError
+		return "Last error: " + m.lastError
 	}
-	return "Letzte Umbenennung: " + valueOrDash(m.lastRename)
+	return "Last rename: " + valueOrDash(m.lastRename)
 }
 
 func truncateText(text string, width int) string {
