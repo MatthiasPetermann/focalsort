@@ -1,7 +1,6 @@
 package exif
 
 import (
-	"errors"
 	"fmt"
 	"hash/crc32"
 	"os"
@@ -75,14 +74,7 @@ func DeriveMetadata(filePath string, fallbackToModTime bool) (Metadata, error) {
 
 	tm, tsErr := x.DateTime()
 	if tsErr != nil {
-		if !fallbackToModTime {
-			return Metadata{}, tsErr
-		}
-		fallback, modErr := FallbackTimestampFromModTime(filePath)
-		if modErr != nil {
-			return Metadata{}, errors.Join(tsErr, modErr)
-		}
-		return Metadata{Timestamp: FormatTimestamp(fallback), CameraID: cameraIdentifier(x)}, nil
+		return Metadata{Timestamp: FormatTimestamp(time.Unix(0, 0)), CameraID: "UNK"}, nil
 	}
 
 	return Metadata{Timestamp: FormatTimestamp(tm), CameraID: cameraIdentifier(x)}, nil
