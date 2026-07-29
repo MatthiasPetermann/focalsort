@@ -10,6 +10,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/mattn/go-runewidth"
 )
 
 type logMsg string
@@ -143,46 +144,30 @@ func (m model) View() string {
 	}
 
 	palette := struct {
-		bg      lipgloss.Color
-		panel   lipgloss.Color
-		title   lipgloss.Color
-		text    lipgloss.Color
-		muted   lipgloss.Color
-		success lipgloss.Color
-		error   lipgloss.Color
-		accent  lipgloss.Color
+		bg     lipgloss.Color
+		panel  lipgloss.Color
+		title  lipgloss.Color
+		text   lipgloss.Color
+		accent lipgloss.Color
 	}{
-		bg:      lipgloss.Color("#1A103D"),
-		panel:   lipgloss.Color("#24124D"),
-		title:   lipgloss.Color("#FF5EF1"),
-		text:    lipgloss.Color("#E6DCFF"),
-		muted:   lipgloss.Color("#A79ACF"),
-		success: lipgloss.Color("#00F5D4"),
-		error:   lipgloss.Color("#FF4D9D"),
-		accent:  lipgloss.Color("#7DF9FF"),
+		bg:     lipgloss.Color("#1A103D"),
+		panel:  lipgloss.Color("#24124D"),
+		title:  lipgloss.Color("#FF5EF1"),
+		text:   lipgloss.Color("#E6DCFF"),
+		accent: lipgloss.Color("#7DF9FF"),
 	}
 
-	viewportWidth := maxInt(m.width, 80)
-	frameWidth := viewportWidth - 4
+	viewportWidth := maxInt(m.width, 1)
+	viewportHeight := maxInt(m.height, 1)
 	frame := lipgloss.NewStyle().
 		Background(palette.bg).
 		Foreground(palette.text).
-		Padding(1, 2).
-		Width(frameWidth)
+		Width(viewportWidth).
+		Height(viewportHeight)
 
 	titleStyle := lipgloss.NewStyle().Foreground(palette.title).Bold(true)
-	helpStyle := lipgloss.NewStyle().Foreground(palette.muted)
-	labelStyle := lipgloss.NewStyle().Foreground(palette.accent).Bold(true)
-	okStyle := lipgloss.NewStyle().Foreground(palette.success).Bold(true)
-	errStyle := lipgloss.NewStyle().Foreground(palette.error).Bold(true)
-
-	panelWidth := maxInt((viewportWidth-12)/2, 36)
-	panelStyle := lipgloss.NewStyle().
-		Background(palette.panel).
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(palette.accent).
-		Padding(0, 1).
-		Width(panelWidth)
+	borderStyle := lipgloss.NewStyle().Foreground(palette.accent)
+	panelStyle := lipgloss.NewStyle().Background(palette.panel)
 
 	pct := 0.0
 	if m.total > 0 {
@@ -192,77 +177,93 @@ func (m model) View() string {
 	if elapsed < 0 {
 		elapsed = 0
 	}
-	throughput := 0.0
-	if elapsed > 0 {
-		throughput = float64(m.processed) / elapsed.Seconds()
+	lines := []string{titleStyle.Render(padText("FocalSort Synthwave | q: Abbrechen | c: Logs loeschen", viewportWidth))}
+	usedHeight := 1
+	if viewportHeight >= 14 {
+		lines = append(lines,
+			padText("Import: "+valueOrDash(m.importFolder), viewportWidth),
+			padText("Aktuell: "+valueOrDash(m.currentFile), viewportWidth),
+			padText(activityText(m), viewportWidth),
+		)
+		usedHeight += 3
+	} else if viewportHeight >= 9 {
+		lines = append(lines, padText("Aktuell: "+valueOrDash(m.currentFile), viewportWidth))
+		usedHeight++
 	}
 
-	progressBar := renderProgressBar(pct, panelWidth-6)
+	if viewportHeight >= 8 {
+		if viewportWidth >= 70 {
+			leftWidth := (viewportWidth - 1) / 2
+			rightWidth := viewportWidth - leftWidth - 1
+			left := box(leftWidth, []string{
+				fmt.Sprintf("Fortschritt: %d/%d (%.1f%%)", m.processed, m.total, pct*100),
+				renderProgressBar(pct, maxInt(leftWidth-4, 1)),
+				"Laufzeit: " + elapsed.String(),
+			})
+			right := box(rightWidth, []string{
+				fmt.Sprintf("Erfolg: %d | Fehler: %d", m.success, m.failed),
+				fmt.Sprintf("Uebersprungen: %d | Bereits benannt: %d", m.skipped, m.alreadyNamed),
+				fmt.Sprintf("rekursiv=%t | dry-run=%t", m.recursive, m.dryRun),
+			})
+			for i := range left {
+				lines = append(lines, borderStyle.Render(left[i])+" "+borderStyle.Render(right[i]))
+			}
+		} else {
+			for _, line := range box(viewportWidth, []string{
+				fmt.Sprintf("Fortschritt: %d/%d (%.1f%%)", m.processed, m.total, pct*100),
+				fmt.Sprintf("Erfolg: %d | Fehler: %d | Uebersprungen: %d", m.success, m.failed, m.skipped),
+				renderProgressBar(pct, maxInt(viewportWidth-4, 1)),
+			}) {
+				lines = append(lines, borderStyle.Render(line))
+			}
+		}
+		usedHeight += 5
+	}
 
-	leftPanel := strings.Join([]string{
-		fmt.Sprintf("%s %d/%d", labelStyle.Render("Progress"), m.processed, m.total),
-		fmt.Sprintf("%s %5.1f%%", labelStyle.Render("Fortschritt"), pct*100),
-		fmt.Sprintf("%s %s", labelStyle.Render("Laufzeit"), elapsed),
-		fmt.Sprintf("%s %.2f Bilder/s", labelStyle.Render("Rate"), throughput),
-		progressBar,
-	}, "\n")
+	logHeight := viewportHeight - usedHeight
+	if logHeight >= 3 {
+		innerLogWidth := maxInt(viewportWidth-2, 1)
+		logLines := tailLogs(wrapLines(m.logs, innerLogWidth), maxInt(logHeight-2, 1))
+		if len(logLines) == 0 {
+			logLines = []string{"Noch keine Logeintraege"}
+		}
+		for len(logLines) < logHeight-2 {
+			logLines = append(logLines, "")
+		}
+		for _, line := range box(viewportWidth, logLines) {
+			lines = append(lines, panelStyle.Render(line))
+		}
+	}
 
-	rightPanel := strings.Join([]string{
-		fmt.Sprintf("%s %s", labelStyle.Render("Erfolg"), okStyle.Render(fmt.Sprintf("%d", m.success))),
-		fmt.Sprintf("%s %s", labelStyle.Render("Fehler"), errStyle.Render(fmt.Sprintf("%d", m.failed))),
-		fmt.Sprintf("%s %d", labelStyle.Render("Übersprungen"), m.skipped),
-		fmt.Sprintf("%s %d", labelStyle.Render("Bereits benannt"), m.alreadyNamed),
-		fmt.Sprintf("%s %v", labelStyle.Render("Recursive"), m.recursive),
-		fmt.Sprintf("%s %v", labelStyle.Render("Dry-run"), m.dryRun),
-		fmt.Sprintf("%s %v", labelStyle.Render("Fallback mtime"), m.fallbackModTime),
-		fmt.Sprintf("%s %d", labelStyle.Render("Checksum Len"), m.checksumLength),
-	}, "\n")
+	return frame.Render(strings.Join(lines, "\n"))
+}
 
-	headline := titleStyle.Render("FocalSort Synthwave")
-	help := helpStyle.Render("q: quit, c: logs löschen")
+func box(width int, content []string) []string {
+	width = maxInt(width, 2)
+	innerWidth := width - 2
+	lines := make([]string, 0, len(content)+2)
+	lines = append(lines, "+"+strings.Repeat("-", innerWidth)+"+")
+	for _, line := range content {
+		lines = append(lines, "|"+padText(line, innerWidth)+"|")
+	}
+	lines = append(lines, "+"+strings.Repeat("-", innerWidth)+"+")
+	return lines
+}
 
-	infoWidth := maxInt(frameWidth-8, 20)
-	source := wrapBlock(fmt.Sprintf("%s %s", labelStyle.Render("Import"), m.importFolder), infoWidth)
-	currentFile := wrapBlock(fmt.Sprintf("%s %s", labelStyle.Render("Aktuell"), valueOrDash(m.currentFile)), infoWidth)
-	lastRename := wrapBlock(fmt.Sprintf("%s %s", labelStyle.Render("Letzte Umbenennung"), valueOrDash(m.lastRename)), infoWidth)
+func padText(text string, width int) string {
+	text = truncateText(text, width)
+	return text + strings.Repeat(" ", maxInt(width-runewidth.StringWidth(text), 0))
+}
 
-	lastErrorValue := valueOrDash(m.lastError)
+func activityText(m model) string {
 	if m.lastError != "" {
-		lastErrorValue = errStyle.Render(lastErrorValue)
+		return "Letzter Fehler: " + m.lastError
 	}
-	lastError := wrapBlock(fmt.Sprintf("%s %s", labelStyle.Render("Letzter Fehler"), lastErrorValue), infoWidth)
+	return "Letzte Umbenennung: " + valueOrDash(m.lastRename)
+}
 
-	top := lipgloss.JoinHorizontal(lipgloss.Top, panelStyle.Render(leftPanel), panelStyle.Render(rightPanel))
-
-	logPanelWidth := maxInt(viewportWidth-10, 30)
-	logHeight := maxInt(m.height-18, 8)
-	innerLogWidth := maxInt(logPanelWidth-6, 10)
-	wrappedLogs := wrapLines(m.logs, innerLogWidth)
-	logLines := tailLogs(wrappedLogs, logHeight)
-	if len(logLines) == 0 {
-		logLines = []string{"Noch keine Logeinträge"}
-	}
-	logPanel := lipgloss.NewStyle().
-		Background(palette.panel).
-		Border(lipgloss.NormalBorder()).
-		BorderForeground(palette.title).
-		Padding(0, 1).
-		Width(logPanelWidth).
-		Height(logHeight).
-		Render(strings.Join(logLines, "\n"))
-
-	content := strings.Join([]string{
-		headline,
-		help,
-		source,
-		currentFile,
-		lastRename,
-		lastError,
-		top,
-		logPanel,
-	}, "\n\n")
-
-	return frame.Render(content)
+func truncateText(text string, width int) string {
+	return runewidth.Truncate(text, maxInt(width, 1), "...")
 }
 
 func valueOrDash(value string) string {

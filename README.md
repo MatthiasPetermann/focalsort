@@ -28,6 +28,19 @@ Wichtige Flags:
 - `--checksum-length` (default: `16`, Bereich `1..40`): Länge des Checksum-Suffixes
 - `--tui, -t`: Fullscreen Terminal-UI (Bubble Tea, Synthwave) aktivieren (`q`/`Strg+C`=Verarbeitung abbrechen, `c`=Logs löschen)
 
+## Build fuer Linux
+
+```bash
+make linux
+scp dist/focalsort-linux-amd64 user@server:/ziel/pfad/
+```
+
+Das Target erzeugt eine statisch gelinkte Linux-Binaerdatei ohne CGO-Abhaengigkeiten. Fuer ARM64-Server:
+
+```bash
+make linux GOARCH=arm64
+```
+
 ## Beispiele
 
 ```bash

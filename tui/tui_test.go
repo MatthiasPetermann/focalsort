@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 func TestModelUpdateAndView(t *testing.T) {
@@ -34,7 +35,7 @@ func TestModelUpdateAndView(t *testing.T) {
 	if !strings.Contains(view, "FocalSort Synthwave") {
 		t.Fatalf("missing title in view: %q", view)
 	}
-	if !strings.Contains(view, "Progress") {
+	if !strings.Contains(view, "Fortschritt") {
 		t.Fatalf("missing progress in view: %q", view)
 	}
 	if !strings.Contains(view, "first") {
@@ -119,5 +120,33 @@ func TestHardWrap(t *testing.T) {
 	}
 	if wrapped[0] != "abc" || wrapped[1] != "def" {
 		t.Fatalf("unexpected wrapped output: %#v", wrapped)
+	}
+}
+
+func TestViewFitsWindowSize(t *testing.T) {
+	t.Parallel()
+
+	for _, size := range []struct {
+		width  int
+		height int
+	}{
+		{width: 120, height: 40},
+		{width: 80, height: 24},
+		{width: 50, height: 12},
+	} {
+		m := newModel()
+		updated, _ := m.Update(tea.WindowSizeMsg{Width: size.width, Height: size.height})
+		m = updated.(model)
+		m.importFolder = strings.Repeat("very-long-folder-name/", 20)
+		m.currentFile = strings.Repeat("very-long-file-name.jpg", 20)
+		m.logs = []string{strings.Repeat("long log entry ", 30)}
+
+		view := m.View()
+		if got := lipgloss.Width(view); got != size.width {
+			t.Errorf("%dx%d view width = %d, want %d", size.width, size.height, got, size.width)
+		}
+		if got := lipgloss.Height(view); got != size.height {
+			t.Errorf("%dx%d view height = %d, want %d", size.width, size.height, got, size.height)
+		}
 	}
 }
