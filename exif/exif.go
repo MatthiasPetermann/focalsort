@@ -70,14 +70,7 @@ func DeriveMetadata(filePath string, fallbackToModTime bool) (Metadata, error) {
 
 	x, decodeErr := exif.Decode(f)
 	if decodeErr != nil {
-		if !fallbackToModTime {
-			return Metadata{}, decodeErr
-		}
-		fallback, modErr := FallbackTimestampFromModTime(filePath)
-		if modErr != nil {
-			return Metadata{}, errors.Join(decodeErr, modErr)
-		}
-		return Metadata{Timestamp: FormatTimestamp(fallback), CameraID: "UNK"}, nil
+		return Metadata{Timestamp: FormatTimestamp(time.Unix(0, 0)), CameraID: "UNK"}, nil
 	}
 
 	tm, tsErr := x.DateTime()

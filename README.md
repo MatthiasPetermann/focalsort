@@ -8,6 +8,7 @@ FocalSort analyzes JPG/JPEG files and renames them deterministically.
 - supports `.jpg` and `.jpeg` files case-insensitively
 - produces names in the format `YYYYMMDD_HHMMSS_<cameraid>_<checksum>.jpg`
 - `cameraid`: compact camera identifier derived from EXIF `Make` and `Model` (for example, `SONA2F`)
+- files with unparseable EXIF use `19700101_000000` and camera ID `UNK`
 - resolves filename collisions deterministically with `_0001`, `_0002`, ...
 - does not detect content duplicates: identical images are retained and receive a collision suffix
 - supports dry runs without modifying files

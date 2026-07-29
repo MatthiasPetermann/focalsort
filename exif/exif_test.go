@@ -17,7 +17,7 @@ func TestFormatTimestampUTC(t *testing.T) {
 	}
 }
 
-func TestDeriveTimestampFallback(t *testing.T) {
+func TestDeriveMetadataUsesEpochForUnparseableExif(t *testing.T) {
 	t.Parallel()
 
 	file, err := os.CreateTemp(t.TempDir(), "not-a-jpeg-*.jpg")
@@ -26,17 +26,16 @@ func TestDeriveTimestampFallback(t *testing.T) {
 	}
 	file.Close()
 
-	if _, err := DeriveTimestamp(file.Name(), false); err == nil {
-		t.Fatalf("DeriveTimestamp expected error without fallback")
-	}
-
-	got, err := DeriveTimestamp(file.Name(), true)
+	metadata, err := DeriveMetadata(file.Name(), false)
 	if err != nil {
-		t.Fatalf("DeriveTimestamp fallback: %v", err)
+		t.Fatalf("DeriveMetadata: %v", err)
 	}
 
-	if got == "" {
-		t.Fatalf("DeriveTimestamp fallback returned empty timestamp")
+	if metadata.Timestamp != "19700101_000000" {
+		t.Fatalf("Timestamp = %q, want %q", metadata.Timestamp, "19700101_000000")
+	}
+	if metadata.CameraID != "UNK" {
+		t.Fatalf("CameraID = %q, want %q", metadata.CameraID, "UNK")
 	}
 }
 
