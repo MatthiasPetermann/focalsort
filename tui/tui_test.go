@@ -150,3 +150,17 @@ func TestViewFitsWindowSize(t *testing.T) {
 		}
 	}
 }
+
+func TestBoxUsesGraphicBordersWithoutChangingWidth(t *testing.T) {
+	t.Parallel()
+
+	lines := box(20, []string{"Status"})
+	if lines[0] != "╭──────────────────╮" || lines[len(lines)-1] != "╰──────────────────╯" {
+		t.Fatalf("unexpected box borders: %#v", lines)
+	}
+	for _, line := range lines {
+		if got := lipgloss.Width(line); got != 20 {
+			t.Errorf("box line width = %d, want 20: %q", got, line)
+		}
+	}
+}

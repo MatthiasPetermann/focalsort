@@ -242,11 +242,11 @@ func box(width int, content []string) []string {
 	width = maxInt(width, 2)
 	innerWidth := width - 2
 	lines := make([]string, 0, len(content)+2)
-	lines = append(lines, "+"+strings.Repeat("-", innerWidth)+"+")
+	lines = append(lines, "╭"+strings.Repeat("─", innerWidth)+"╮")
 	for _, line := range content {
-		lines = append(lines, "|"+padText(line, innerWidth)+"|")
+		lines = append(lines, "│"+padText(line, innerWidth)+"│")
 	}
-	lines = append(lines, "+"+strings.Repeat("-", innerWidth)+"+")
+	lines = append(lines, "╰"+strings.Repeat("─", innerWidth)+"╯")
 	return lines
 }
 
