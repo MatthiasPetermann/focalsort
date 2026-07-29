@@ -85,6 +85,7 @@ func run() error {
 	successCount := 0
 	failedCount := 0
 	skippedCount := 0
+	alreadyNamedCount := 0
 	processedCount := 0
 
 	for _, path := range files {
@@ -98,7 +99,7 @@ func run() error {
 			failedCount++
 			setProcessingError(fmt.Sprintf("metadata: %v", err))
 			logError("Error deriving metadata", err)
-			updateCounters(successCount, failedCount, skippedCount)
+			updateCounters(successCount, failedCount, skippedCount, alreadyNamedCount)
 			continue
 		}
 
@@ -107,7 +108,7 @@ func run() error {
 			failedCount++
 			setProcessingError(fmt.Sprintf("checksum: %v", err))
 			logError("Error calculating checksum", err)
-			updateCounters(successCount, failedCount, skippedCount)
+			updateCounters(successCount, failedCount, skippedCount, alreadyNamedCount)
 			continue
 		}
 
@@ -120,28 +121,33 @@ func run() error {
 		}
 
 		shortChecksum := hash.ShortChecksum(checksum, checksumLength)
-		newPath, err := utils.RenameImage(path, metadata.Timestamp, metadata.CameraID, qualityCode, shortChecksum, dryRun)
+		newPath, unchanged, err := utils.RenameImage(path, metadata.Timestamp, metadata.CameraID, qualityCode, shortChecksum, dryRun)
 		if err != nil {
 			failedCount++
 			setProcessingError(fmt.Sprintf("rename: %v", err))
 			logError("Error renaming image", err)
-			updateCounters(successCount, failedCount, skippedCount)
+			updateCounters(successCount, failedCount, skippedCount, alreadyNamedCount)
 			continue
 		}
 
-		successCount++
+		if unchanged {
+			alreadyNamedCount++
+			logMessage(fmt.Sprintf("Already named correctly: %s", filepath.Base(path)))
+		} else {
+			successCount++
+			setLastRename(path, newPath)
+		}
 		processedCount++
-		setLastRename(path, newPath)
 		clearLastError()
 		if dryRun {
 			logMessage(fmt.Sprintf("Dry-run rename: %s -> %s", path, newPath))
 		}
 
 		updateProgress(processedCount, len(files))
-		updateCounters(successCount, failedCount, skippedCount)
+		updateCounters(successCount, failedCount, skippedCount, alreadyNamedCount)
 	}
 
-	logMessage(fmt.Sprintf("Processing complete: success=%d failed=%d skipped=%d", successCount, failedCount, skippedCount))
+	logMessage(fmt.Sprintf("Processing complete: success=%d failed=%d skipped=%d already-named=%d", successCount, failedCount, skippedCount, alreadyNamedCount))
 	return nil
 }
 
@@ -219,9 +225,9 @@ func setLastRename(from string, to string) {
 	}
 }
 
-func updateCounters(success int, failed int, skipped int) {
+func updateCounters(success int, failed int, skipped int, alreadyNamed int) {
 	if useTUI {
-		tui.UpdateCounters(success, failed, skipped)
+		tui.UpdateCounters(success, failed, skipped, alreadyNamed)
 	}
 }
 

@@ -15,9 +15,12 @@ func TestRenameImageDryRun(t *testing.T) {
 		t.Fatalf("write source: %v", err)
 	}
 
-	target, err := RenameImage(source, "20250101_101010", "SON1A2B", "Q37", "abc123", true)
+	target, unchanged, err := RenameImage(source, "20250101_101010", "SON1A2B", "Q37", "abc123", true)
 	if err != nil {
 		t.Fatalf("RenameImage dry-run: %v", err)
+	}
+	if unchanged {
+		t.Fatal("dry-run rename unexpectedly reported unchanged")
 	}
 
 	if _, err := os.Stat(source); err != nil {
@@ -43,9 +46,12 @@ func TestRenameImageCollisionResolution(t *testing.T) {
 		t.Fatalf("write collision: %v", err)
 	}
 
-	target, err := RenameImage(source, "20250101_101010", "SON1A2B", "Q37", "abc123", false)
+	target, unchanged, err := RenameImage(source, "20250101_101010", "SON1A2B", "Q37", "abc123", false)
 	if err != nil {
 		t.Fatalf("RenameImage collision: %v", err)
+	}
+	if unchanged {
+		t.Fatal("collision rename unexpectedly reported unchanged")
 	}
 
 	if filepath.Base(target) != "20250101_101010_SON1A2B_Q37_abc123_0001.jpg" {
@@ -54,5 +60,26 @@ func TestRenameImageCollisionResolution(t *testing.T) {
 
 	if _, err := os.Stat(target); err != nil {
 		t.Fatalf("renamed file missing: %v", err)
+	}
+}
+
+func TestRenameImageAlreadyNamed(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	source := filepath.Join(dir, "20250101_101010_SON1A2B_Q37_abc123.jpg")
+	if err := os.WriteFile(source, []byte("x"), 0o644); err != nil {
+		t.Fatalf("write source: %v", err)
+	}
+
+	target, unchanged, err := RenameImage(source, "20250101_101010", "SON1A2B", "Q37", "abc123", false)
+	if err != nil {
+		t.Fatalf("RenameImage already named: %v", err)
+	}
+	if !unchanged {
+		t.Fatal("already named file was not reported unchanged")
+	}
+	if target != source {
+		t.Fatalf("target = %s, want %s", target, source)
 	}
 }

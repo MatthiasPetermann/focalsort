@@ -20,9 +20,10 @@ type statusMsg struct {
 }
 
 type countersMsg struct {
-	success int
-	failed  int
-	skipped int
+	success      int
+	failed       int
+	skipped      int
+	alreadyNamed int
 }
 
 type configMsg struct {
@@ -45,12 +46,13 @@ type errorMsg string
 type stopMsg struct{}
 
 type model struct {
-	logs      []string
-	processed int
-	total     int
-	success   int
-	failed    int
-	skipped   int
+	logs         []string
+	processed    int
+	total        int
+	success      int
+	failed       int
+	skipped      int
+	alreadyNamed int
 
 	importFolder    string
 	recursive       bool
@@ -96,6 +98,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.success = message.success
 		m.failed = message.failed
 		m.skipped = message.skipped
+		m.alreadyNamed = message.alreadyNamed
 		return m, nil
 	case configMsg:
 		m.importFolder = message.importFolder
@@ -207,6 +210,7 @@ func (m model) View() string {
 		fmt.Sprintf("%s %s", labelStyle.Render("Erfolg"), okStyle.Render(fmt.Sprintf("%d", m.success))),
 		fmt.Sprintf("%s %s", labelStyle.Render("Fehler"), errStyle.Render(fmt.Sprintf("%d", m.failed))),
 		fmt.Sprintf("%s %d", labelStyle.Render("Übersprungen"), m.skipped),
+		fmt.Sprintf("%s %d", labelStyle.Render("Bereits benannt"), m.alreadyNamed),
 		fmt.Sprintf("%s %v", labelStyle.Render("Recursive"), m.recursive),
 		fmt.Sprintf("%s %v", labelStyle.Render("Dry-run"), m.dryRun),
 		fmt.Sprintf("%s %v", labelStyle.Render("Fallback mtime"), m.fallbackModTime),
@@ -439,13 +443,13 @@ func SetLastError(err string) {
 	}
 }
 
-func UpdateCounters(success int, failed int, skipped int) {
+func UpdateCounters(success int, failed int, skipped int, alreadyNamed int) {
 	programMu.Lock()
 	p := program
 	programMu.Unlock()
 
 	if p != nil {
-		p.Send(countersMsg{success: success, failed: failed, skipped: skipped})
+		p.Send(countersMsg{success: success, failed: failed, skipped: skipped, alreadyNamed: alreadyNamed})
 	}
 }
 

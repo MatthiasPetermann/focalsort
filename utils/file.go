@@ -8,30 +8,30 @@ import (
 	"strings"
 )
 
-func RenameImage(filePath, timestamp, cameraID, qualityCode, checksum string, dryRun bool) (string, error) {
+func RenameImage(filePath, timestamp, cameraID, qualityCode, checksum string, dryRun bool) (string, bool, error) {
 	dir := filepath.Dir(filePath)
 	ext := strings.ToLower(filepath.Ext(filePath))
 	baseName := fmt.Sprintf("%s_%s_%s_%s", timestamp, cameraID, qualityCode, checksum)
 
 	candidatePath := filepath.Join(dir, baseName+ext)
 	if filePath == candidatePath {
-		return candidatePath, nil
+		return candidatePath, true, nil
 	}
 
 	collisionResolvedPath, err := uniqueTargetPath(filePath, candidatePath, ext)
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 
 	if dryRun {
-		return collisionResolvedPath, nil
+		return collisionResolvedPath, false, nil
 	}
 
 	if filePath == collisionResolvedPath {
-		return collisionResolvedPath, nil
+		return collisionResolvedPath, true, nil
 	}
 
-	return collisionResolvedPath, os.Rename(filePath, collisionResolvedPath)
+	return collisionResolvedPath, false, os.Rename(filePath, collisionResolvedPath)
 }
 
 func uniqueTargetPath(sourcePath, preferredPath, ext string) (string, error) {

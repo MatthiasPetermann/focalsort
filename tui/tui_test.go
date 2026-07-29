@@ -18,6 +18,12 @@ func TestModelUpdateAndView(t *testing.T) {
 	}
 	m = updated.(model)
 
+	updated, cmd = m.Update(countersMsg{success: 2, failed: 1, skipped: 3, alreadyNamed: 4})
+	if cmd != nil {
+		t.Fatalf("expected nil command after counter update")
+	}
+	m = updated.(model)
+
 	updated, cmd = m.Update(statusMsg{processed: 3, total: 10})
 	if cmd != nil {
 		t.Fatalf("expected nil command after status update")
@@ -36,6 +42,9 @@ func TestModelUpdateAndView(t *testing.T) {
 	}
 	if !strings.Contains(view, "█") {
 		t.Fatalf("missing progress bar in view: %q", view)
+	}
+	if !strings.Contains(view, "Bereits benannt") {
+		t.Fatalf("missing already named counter in view: %q", view)
 	}
 }
 
