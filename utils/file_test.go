@@ -90,3 +90,24 @@ func TestRenameImageAlreadyNamed(t *testing.T) {
 		t.Fatalf("target = %s, want %s", target, source)
 	}
 }
+
+func TestRenameImageAlreadyNamedDryRun(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	source := filepath.Join(dir, "20250101_101010_SON1A2B_abc123.jpg")
+	if err := os.WriteFile(source, []byte("x"), 0o644); err != nil {
+		t.Fatalf("write source: %v", err)
+	}
+
+	target, unchanged, err := RenameImage(source, "20250101_101010", "SON1A2B", "abc123", true)
+	if err != nil {
+		t.Fatalf("RenameImage already named dry-run: %v", err)
+	}
+	if !unchanged {
+		t.Fatal("already named dry-run file was not reported unchanged")
+	}
+	if target != source {
+		t.Fatalf("target = %s, want %s", target, source)
+	}
+}

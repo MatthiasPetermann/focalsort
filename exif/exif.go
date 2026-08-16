@@ -41,7 +41,7 @@ func ExtractExifTimestamp(filePath string) (time.Time, error) {
 		return time.Time{}, err
 	}
 
-	return tm.UTC(), nil
+	return tm, nil
 }
 
 func FallbackTimestampFromModTime(filePath string) (time.Time, error) {
@@ -49,7 +49,7 @@ func FallbackTimestampFromModTime(filePath string) (time.Time, error) {
 	if err != nil {
 		return time.Time{}, err
 	}
-	return info.ModTime().UTC(), nil
+	return info.ModTime(), nil
 }
 
 func DeriveTimestamp(filePath string, fallbackToModTime bool) (string, error) {
@@ -69,19 +69,19 @@ func DeriveMetadata(filePath string, fallbackToModTime bool) (Metadata, error) {
 
 	x, decodeErr := exif.Decode(f)
 	if decodeErr != nil {
-		return Metadata{Timestamp: FormatTimestamp(time.Unix(0, 0)), CameraID: "UNK"}, nil
+		return Metadata{Timestamp: FormatTimestamp(time.Unix(0, 0).UTC()), CameraID: "UNK"}, nil
 	}
 
 	tm, tsErr := x.DateTime()
 	if tsErr != nil {
-		return Metadata{Timestamp: FormatTimestamp(time.Unix(0, 0)), CameraID: "UNK"}, nil
+		return Metadata{Timestamp: FormatTimestamp(time.Unix(0, 0).UTC()), CameraID: "UNK"}, nil
 	}
 
 	return Metadata{Timestamp: FormatTimestamp(tm), CameraID: cameraIdentifier(x)}, nil
 }
 
 func FormatTimestamp(tm time.Time) string {
-	return tm.UTC().Format("20060102_150405")
+	return tm.Format("20060102_150405")
 }
 
 func cameraIdentifier(x *exif.Exif) string {

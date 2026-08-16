@@ -136,10 +136,13 @@ func run() error {
 		} else {
 			successCount++
 			setLastRename(path, newPath)
+			if !dryRun {
+				logMessage(fmt.Sprintf("Renamed: %s -> %s", path, newPath))
+			}
 		}
 		processedCount++
 		clearLastError()
-		if dryRun {
+		if dryRun && !unchanged {
 			logMessage(fmt.Sprintf("Dry-run rename: %s -> %s", path, newPath))
 		}
 

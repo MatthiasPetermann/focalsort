@@ -6,14 +6,14 @@ import (
 	"time"
 )
 
-func TestFormatTimestampUTC(t *testing.T) {
+func TestFormatTimestampPreservesLocalTime(t *testing.T) {
 	t.Parallel()
 
 	local := time.Date(2025, 1, 2, 3, 4, 5, 0, time.FixedZone("X", 2*3600))
 	got := FormatTimestamp(local)
 
-	if got != "20250102_010405" {
-		t.Fatalf("FormatTimestamp = %s, want %s", got, "20250102_010405")
+	if got != "20250102_030405" {
+		t.Fatalf("FormatTimestamp = %s, want %s", got, "20250102_030405")
 	}
 }
 
